@@ -1,59 +1,181 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# CRUD
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## El back
 
-## About Laravel
+2. Recibir datos del bacck.
+   Esta acción se hace igual en blade
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+* En el back
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```php
+ public function index()
+    {
+        $projects = Project::all();
+        $fields = (new Project)->getFillable();
+        $titleFields = Project::getLabel();
+        return Inertia::render("Projects/Index", ['projects'=>$projects, "fields"=>$fields, "titleFields"=>$titleFields]);
+        //
+    }
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## En el front: leer los datos
 
-## Learning Laravel
+```php
+const props = defineProps({ projects, fields, titleFields });
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+> No se recomienda destructurar props en páginas que usan paginación o recargas parciales con Inertia, porque las props
+> pueden actualizarse sin que el componente se remonte.
 
-## Laravel Sponsors
+> Si destructuramos, perdemos la conexión con el proxy reactivo de Vue y el valor no se actualizará.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+> Por eso es más seguro usar:
+> ```php
+> const props = defineProps(...)
+> ```
 
-### Premium Partners
+* Renderizar valores en el front:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```vue
+//Aunque en el back ambos dos son arrays, en el front no es así
+//En un caso es un array asociativo y lo conviete en objeto en js
+//En el otro caso es un array de arrays asociatibo y lo convierte en un array de objetos
 
-## Contributing
+<script setup>
+    import Layout from "@/Layouts/Layout.vue";
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+    const props = defineProps({
+        projects: Array,
+        fieldsAndLabels: Object,
+    });
+</script>
 
-## Code of Conduct
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### En el front: Renderizar los datos
 
-## Security Vulnerabilities
+Una vez que los tenemos los mostraremos usando (en Vue) v-for, en React pe el método map
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```vue
 
-## License
+<template>
+    <Layout>
+        <div class="overflow-x-auto h-96 w-96">
+            <table class="table table-xs table-pin-rows table-pin-cols">
+                <thead>
+                <tr>
+                    <th
+                        v-for="(label, field) in fieldsAndLabels"
+                        :key="field"
+                    >
+                        {{ label }}
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="project in projects" :key="project.id">
+                    <td v-for="(label, field) in fieldsAndLabels">
+                        {{ project[field] }}
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </Layout>
+</template>
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```
+
+### Ordenar los datos
+
+* Para ello necesito:
+
+1. variable que me diga el sentido ascendente, descendente
+
+```php
+const ascendente = ref(true);
+```
+
+* En el template
+
+```html
+ <span v-if="field === fieldOrder">
+    {{ ascendente ? "▲" : "▼" }}
+ </span>
+```
+
+2. El campo de ordenación
+
+```vue
+const fieldOrder = ref(Object.keys(props.fieldsAndLabels)[0]); //Quiero el primer indice del objeto o key
+```
+
+3. El array de projectos ordenados por ese campo
+
+```vue
+
+const projectsSort = computed(() => {
+    return [...props.projects].sort((a, b) => {
+        let aVal = a[fieldOrder.value];
+        let bVal = b[fieldOrder.value];
+
+        //Ordenar números
+        if (!isNaN(aVal) && !isNaN(bVal))
+            return ascendente.value ? aVal - bVal : bVal - aVal;
+
+        if (!isNaN(Date.parse(aVal))) {
+            return ascendente.value
+                ? new Date(aVal) - new Date(bVal)
+                : new Date(bVal) - new Date(aVal);
+        }
+
+        // ✅ Strings → usar localeCompare (MUY importante)
+        return ascendente.value
+            ? String(aVal).localeCompare(String(bVal))
+            : String(bVal).localeCompare(String(aVal));
+    });
+});
+
+```
+
+4. Un método para ordenar por ese campo
+
+```js
+const sort = (field) => {
+  if (field === fieldOrder.value)
+      ascendente.value = !ascendente.value;
+  else {
+    fieldOrder.value = field;
+    ascendente.value = true;
+}
+};
+```
+* Y luevo invocarlo en el template
+
+```vue
+  <th
+    v-for="(label, field) in fieldsAndLabels"
+    :key="field"
+    @click="sort(field)"
+    class="cursor-pointer"
+>
+    {{ label }}
+    <span v-if="field === fieldOrder">
+                                {{ ascendente ? "▲" : "▼" }}
+                            </span>
+</th>
+```
+
+
+### Filtrar los datos
+
+### Botón añadir projecto
+
+### Botón Editar projecto
+
+### Botón borrar projecto
+
+### Paginar
+
+

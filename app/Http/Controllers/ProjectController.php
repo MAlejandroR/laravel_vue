@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
+use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
 class ProjectController extends Controller
@@ -14,10 +15,25 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $projects = Project::all();
-        $fields = (new Project)->getFillable();
-        return Inertia::render("Projects/Index", compact('projects', 'fields'));
-        //
+        $payload = request()->validate([
+            'sort_by' => ['nullable', 'string'],
+            'sort_direction' => ['nullable', 'in:asc,desc'],
+        ]);
+
+        $sortBy = $payload['sort_by'] ?? 'id';
+        $sortDirection = $payload['sort_direction'] ?? 'desc';
+
+        $projects = Project::orderBy($sortBy, $sortDirection)->get();
+        $fieldsAndLabels = Project::getFieldsLabel();
+
+        return Inertia::render("Projects/Index", [
+            'projects' => $projects,
+            "fieldsAndLabels" => $fieldsAndLabels,
+            'filters' => [
+                'sort_by' => $sortBy,
+                'sort_direction' => $sortDirection,
+            ],
+        ]);
     }
 
     /**
@@ -25,6 +41,7 @@ class ProjectController extends Controller
      */
     public function create()
     {
+        return Inertia::render("Projects/Create");
         //
     }
 
@@ -33,6 +50,8 @@ class ProjectController extends Controller
      */
     public function store(StoreProjectRequest $request)
     {
+        Project::create($request->input());
+        return Redirect::route('projects.index');
         //
     }
 
@@ -65,6 +84,8 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
+        $project->delete();
+        return back();
         //
     }
 }
