@@ -15,24 +15,13 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $payload = request()->validate([
-            'sort_by' => ['nullable', 'string'],
-            'sort_direction' => ['nullable', 'in:asc,desc'],
-        ]);
 
-        $sortBy = $payload['sort_by'] ?? 'id';
-        $sortDirection = $payload['sort_direction'] ?? 'desc';
-
-        $projects = Project::orderBy($sortBy, $sortDirection)->get();
+        $projects = Project::all();
         $fieldsAndLabels = Project::getFieldsLabel();
 
         return Inertia::render("Projects/Index", [
             'projects' => $projects,
             "fieldsAndLabels" => $fieldsAndLabels,
-            'filters' => [
-                'sort_by' => $sortBy,
-                'sort_direction' => $sortDirection,
-            ],
         ]);
     }
 
@@ -51,8 +40,7 @@ class ProjectController extends Controller
     public function store(StoreProjectRequest $request)
     {
         Project::create($request->input());
-        return Redirect::route('projects.index');
-        //
+        return Redirect::route('projects.index')->with("success","Proyecto creado");
     }
 
     /**
@@ -85,7 +73,7 @@ class ProjectController extends Controller
     public function destroy(Project $project)
     {
         $project->delete();
-        return back();
+        return back()->with("success","Proyecto eliminado");
         //
     }
 }

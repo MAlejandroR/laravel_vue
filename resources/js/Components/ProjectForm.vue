@@ -1,126 +1,112 @@
 <script setup>
-import { useForm } from "@inertiajs/vue3";
-import { computed } from "vue";
-import { useRemember } from "@inertiajs/vue3";
 
-const props = defineProps({
-    project: {
-        type: Object,
-        default: null,
-    },
-});
+import {useForm, router} from "@inertiajs/vue3";
 
-const isEdit = computed(() => !!props.project);
+const props = defineProps({project:{type:Object, default:null}})
+
+
+const submit = ()=>{
+    if (props.project)
+        form.put(route("projects.update", props.project.id))
+    else
+        form.post(route(("projects.store")))
+}
+
 
 const form = useForm({
-    name: props.project?.name ?? "",
-    description: props.project?.description ?? "",
-    hours: props.project?.hours ?? "",
-    starting_date: props.project?.starting_date ?? "",
+    name:props.project?.name ?? '',
+    description:props.project?.description ??'',
+    hours:props.project?.hours?? 0,
+    starting_date:props.project?.starting_date??null
 });
+const cancel = ()=>{
+    console.log("Volviendo al index");
+    router.get(route("projects.index"));
+}
 
-const submit = () => {
-    if (isEdit.value) {
-        form.put(route("projects.update", props.project.id));
-    } else {
-        form.post(route("projects.store"), {
-            onSuccess: () => form.reset(),
-        });
-    }
-};
+
+
 </script>
 
 <template>
-    <Layout>
         <div class="flex justify-center items-center min-h-full">
-            <form
-                @submit.prevent="submit"
-                class="space-y-4 bg-white p-3 rounded rounded-2"
-            >
-                <!-- NAME -->
+            <form @submit.prevent="submit" class="max-w-2xl mx-auto p-6 bg-base-100 shadow-xl rounded-xl space-y-6">
+
+                <!-- Nombre -->
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text">Nombre</span>
+                        <span class="label-text font-semibold">Nombre</span>
                     </label>
-
-                    <input v-model="form.name" class="input input-bordered" />
-
-                    <span v-if="form.errors.name" class="text-error text-sm">
-                        {{ form.errors.name }}
-                    </span>
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Introduce el nombre del proyecto"
+                        class="input input-bordered w-full focus:input-primary"
+                        required
+                        v-model='form.name'
+                    />
                 </div>
 
-                <!-- DESCRIPTION -->
+                <!-- Descripción -->
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text">Descripción</span>
+                        <span class="label-text font-semibold">Descripción</span>
                     </label>
-
                     <textarea
-                        v-model="form.description"
-                        class="textarea textarea-bordered"
-                    >
-                    </textarea>
-
-                    <span
-                        v-if="form.errors.description"
-                        class="text-error text-sm"
-                    >
-                        {{ form.errors.description }}
-                    </span>
+                        name="description"
+                        rows="4"
+                        placeholder="Describe brevemente el proyecto"
+                        class="textarea textarea-bordered w-full focus:textarea-primary"
+                        v-model='form.description'
+                        required
+                    ></textarea>
                 </div>
 
-                <!-- HOURS -->
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Horas</span>
-                    </label>
+                <!-- Grid para horas y fecha -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                    <input
-                        v-model="form.hours"
-                        type="number"
-                        min="0"
-                        class="input input-bordered"
-                    />
+                    <!-- Horas -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold">Horas</span>
+                        </label>
+                        <input
+                            type="number"
+                            name="hours"
+                            min="0"
+                            placeholder="Ej: 120"
+                            class="input input-bordered w-full focus:input-primary"
+                            required
+                            v-model='form.hours'
+                        />
+                    </div>
 
-                    <span v-if="form.errors.hours" class="text-error text-sm">
-                        {{ form.errors.hours }}
-                    </span>
+                    <!-- Fecha -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold">Fecha de comienzo</span>
+                        </label>
+                        <input
+                            type="date"
+                            name="starting_date"
+                            class="input input-bordered w-full focus:input-primary"
+                            v-model="form.starting_date"
+                            required
+                        />
+                    </div>
+
                 </div>
 
-                <!-- DATE -->
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Fecha inicio</span>
-                    </label>
-
-                    <input
-                        v-model="form.starting_date"
-                        type="date"
-                        class="input input-bordered"
-                    />
-
-                    <span
-                        v-if="form.errors.starting_date"
-                        class="text-error text-sm"
-                    >
-                        {{ form.errors.starting_date }}
-                    </span>
-                </div>
-
-                <!-- BUTTON -->
-                <div class="flex justify-end mt-6">
-                    <button class="btn btn-primary" :disabled="form.processing">
-                        <span
-                            v-if="form.processing"
-                            class="loading loading-spinner"
-                        >
-                        </span>
-
-                        {{ isEdit ? "Actualizar proyecto" : "Crear proyecto" }}
+                <!-- Botones -->
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" @click="cancel" class="btn btn-ghost">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Guardar proyecto
                     </button>
                 </div>
+
             </form>
         </div>
-    </Layout>
 </template>

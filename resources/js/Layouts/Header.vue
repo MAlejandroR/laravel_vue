@@ -10,7 +10,7 @@ const user = computed(() => usePage().props.auth.user);
 
 <template>
     <header class="h-header bg-header flex justify-between items-center">
-        <img src="img/logo.png" alt="logo" className="max-h-full" />
+        <img src="/img/logo.png" alt="logo" className="max-h-full" />
         <h1 class="text-4xl text-blue-900">GESTION DEL INSTITUTO</h1>
         <div>
             <div>

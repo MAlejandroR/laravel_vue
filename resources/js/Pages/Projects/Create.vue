@@ -5,8 +5,6 @@ import ProjectForm from "@/Components/ProjectForm.vue";
 
 <template>
     <Layout>
-        <div class="max-w-2xl mx-auto mt-10">
-            <ProjectForm />
-        </div>
+           <ProjectForm />
     </Layout>
 </template>
